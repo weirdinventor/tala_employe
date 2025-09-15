@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use Filament\Models\Contracts\FilamentUser;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -55,9 +56,16 @@ class User extends Authenticatable implements FilamentUser
             case 'admin':
                 return $this->hasAnyRole(['admin', 'super_admin']);
             case 'app':
-                return $this->hasAnyRole(['employee']);
+                return !$this->hasRole(['admin', 'super_admin']);
             default:
                 return false;
         }
+    }
+
+    public function scopeEmployees(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('roles', function (Builder $query) {
+            $query->whereIn('name', ['admin', 'super_admin']);
+        });
     }
 }
